@@ -1,6 +1,8 @@
 package strawman.collection.mutable
 
 import scala.{Int, Unit}
+import scala.reflect.ClassTag
+
 import strawman.collection.{SeqLike, IterableFactory, Iterable, Seq}
 import strawman.collection.immutable.{List, Nil, ::}
 
@@ -54,6 +56,8 @@ class ListBuffer[A]
   def result = this
 
   override def className = "ListBuffer"
+
+  def elementClassTag = ClassTag.Any // not specialized
 }
 
 object ListBuffer extends IterableFactory[ListBuffer] {

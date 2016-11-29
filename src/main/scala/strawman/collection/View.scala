@@ -2,6 +2,7 @@ package strawman.collection
 
 import scala.{Int, Boolean, Nothing, annotation}
 import scala.Predef.intWrapper
+import scala.reflect.ClassTag
 import strawman.collection.mutable.Iterator
 
 /** Concrete collection type: View */
@@ -20,23 +21,27 @@ trait View[+A] extends Iterable[A] with IterableLike[A, View] {
 object View {
   def fromIterator[A](it: => Iterator[A]): View[A] = new View[A] {
     def iterator() = it
+    def elementClassTag = ClassTag.Any // not specialized
   }
 
   /** The empty view */
   case object Empty extends View[Nothing] {
     def iterator() = Iterator.empty
     override def knownSize = 0
+    def elementClassTag = ClassTag.Any // not specialized
   }
 
   /** A view with given elements */
   case class Elems[A](xs: A*) extends View[A] {
     def iterator() = Iterator(xs: _*)
     override def knownSize = xs.length // should be: xs.knownSize, but A*'s are not sequences in this strawman.
+    def elementClassTag = ClassTag.Any // not specialized
   }
 
   /** A view that filters an underlying collection. */
   case class Filter[A](underlying: Iterable[A], p: A => Boolean) extends View[A] {
     def iterator() = underlying.iterator().filter(p)
+    def elementClassTag = underlying.elementClassTag
   }
 
   /** A view that partitions an underlying collection into two views */
@@ -56,6 +61,7 @@ object View {
   /** A view representing one half of a partition. */
   case class Partitioned[A](partition: Partition[A], cond: Boolean) extends View[A] {
     def iterator() = partition.underlying.iterator().filter(x => partition.p(x) == cond)
+    def elementClassTag = partition.underlying.elementClassTag
   }
 
   /** A view that drops leading elements of the underlying collection. */
@@ -64,6 +70,7 @@ object View {
     protected val normN = n max 0
     override def knownSize =
       if (underlying.knownSize >= 0) (underlying.knownSize - normN) max 0 else -1
+    def elementClassTag = underlying.elementClassTag
   }
 
   /** A view that takes leading elements of the underlying collection. */
@@ -72,17 +79,22 @@ object View {
     protected val normN = n max 0
     override def knownSize =
       if (underlying.knownSize >= 0) underlying.knownSize min normN else -1
+    def elementClassTag = underlying.elementClassTag
   }
 
   /** A view that maps elements of the underlying collection. */
   case class Map[A, B](underlying: Iterable[A], f: A => B) extends View[B] {
     def iterator() = underlying.iterator().map(f)
     override def knownSize = underlying.knownSize
+    def elementClassTag = ClassTag.Any // not specialized
+    // TODO: We could specialize based on the @specialized subclass of Function1
+    // but any operation would still go through the unspecialized iterator
   }
 
   /** A view that flatmaps elements of the underlying collection. */
   case class FlatMap[A, B](underlying: Iterable[A], f: A => IterableOnce[B]) extends View[B] {
     def iterator() = underlying.iterator().flatMap(f)
+    def elementClassTag = ClassTag.Any // not specialized
   }
 
   /** A view that concatenates elements of the underlying collection with the elements
@@ -96,6 +108,11 @@ object View {
       case _ =>
         -1
     }
+    def elementClassTag = {
+      // A could have been widened, e.g. A == Any and other.classTag == Object but underlying.classTag == Int
+      ClassTag.Any
+      // TODO: Can we use optimistic specialization here?
+    }
   }
 
   /** A view that zips elements of the underlying collection with the elements
@@ -107,6 +124,7 @@ object View {
       case other: Iterable[_] => underlying.knownSize min other.knownSize
       case _ => -1
     }
+    def elementClassTag = ClassTag.Any
   }
 }
 
@@ -155,5 +173,6 @@ object IndexedView {
   case class Reverse[A](underlying: IndexedView[A]) extends IndexedView[A] {
     def length = underlying.length
     def apply(i: Int) = underlying.apply(length - 1 - i)
+    def elementClassTag = underlying.elementClassTag
   }
 }

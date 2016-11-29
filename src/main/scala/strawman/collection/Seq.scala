@@ -25,6 +25,7 @@ trait LinearSeq[+A] extends Seq[A] with LinearSeqLike[A, LinearSeq] { self =>
     private[this] var current: Seq[A] = self
     def hasNext = !current.isEmpty
     def next() = { val r = current.head; current = current.tail; r }
+    def elementClassTag = self.elementClassTag
   }
 
   /** `length` is defined in terms of `iterator` */
@@ -45,6 +46,7 @@ trait IndexedSeq[+A] extends Seq[A] { self =>
   override def view: IndexedView[A] = new IndexedView[A] {
     def length: Int = self.length
     def apply(i: Int): A = self(i)
+    def elementClassTag = self.elementClassTag
   }
 }
 

@@ -1,6 +1,8 @@
 package strawman.collection.immutable
 
 import scala.{Option, Some, None, Nothing, StringContext}
+import scala.reflect.ClassTag
+
 import strawman.collection.{IterableFactory, Iterable, LinearSeq, SeqLike}
 import strawman.collection.mutable.Iterator
 
@@ -34,6 +36,8 @@ class LazyList[+A](expr: => LazyList.Evaluated[A])
         case Some((hd, tl)) => s"$hd #:: $tl"
       }
     else "LazyList(?)"
+
+  def elementClassTag = ClassTag.Any // not specialized
 }
 
 object LazyList extends IterableFactory[LazyList] {

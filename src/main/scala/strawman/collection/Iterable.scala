@@ -2,8 +2,9 @@ package strawman.collection
 
 import scala.annotation.unchecked.uncheckedVariance
 import scala.reflect.ClassTag
-import scala.{Int, Boolean, Array, Any, Unit, StringContext}
+import scala.{Int, Long, Double, Boolean, Array, Any, Unit, StringContext}
 import java.lang.String
+import java.util.PrimitiveIterator
 
 import strawman.collection.mutable.{ArrayBuffer, StringBuilder}
 
@@ -11,6 +12,35 @@ import strawman.collection.mutable.{ArrayBuffer, StringBuilder}
 trait Iterable[+A] extends IterableOnce[A] with IterableLike[A, Iterable] {
   /** The collection itself */
   protected def coll: this.type = this
+
+  /** The ClassTag of the elements of this collection. Can be more or less precise than A but not inompatible with it.
+    * For example, an Iterable[Int] can have a ClassTag[Any] if a more precise type was not known at construction
+    * time, and an Iterable[Any] can have a ClassTag[Int] (but only if all elements are really of type Int). */
+  def elementClassTag: ClassTag[_ >: (A @uncheckedVariance)]
+
+  /** Get a specialized iterator. The default implementation simply boxes and unboxes as necessary. It should
+    * be overridden in subclasses with primitive data representations. */
+  def specializedIterator(implicit spec: Specialized[A @uncheckedVariance]): spec.Iterator = {
+    val it = iterator
+    spec.asInstanceOf[Specialized[_]] match {
+      case Specialized.SpecializedInt =>
+        new PrimitiveIterator.OfInt {
+          override def nextInt(): Int = it.next().asInstanceOf[Int]
+          override def hasNext: Boolean = it.hasNext
+        }
+      case Specialized.SpecializedLong =>
+        new PrimitiveIterator.OfLong {
+          override def nextLong(): Long = it.next().asInstanceOf[Long]
+          override def hasNext: Boolean = it.hasNext
+        }
+      case Specialized.SpecializedDouble =>
+        new PrimitiveIterator.OfDouble {
+          override def nextDouble(): Double = it.next().asInstanceOf[Double]
+          override def hasNext: Boolean = it.hasNext
+        }
+      case _ => it
+    }
+  }.asInstanceOf[spec.Iterator]
 }
 
 /** Base trait for Iterable operations

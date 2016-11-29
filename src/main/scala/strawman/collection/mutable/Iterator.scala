@@ -1,10 +1,15 @@
 package strawman.collection.mutable
 
 import scala.{Boolean, Int, Unit, Nothing, NoSuchElementException}
+import scala.reflect.ClassTag
+
 import strawman.collection.{IndexedView, IterableOnce}
 
 /** A core Iterator class */
 trait Iterator[+A] { self =>
+  // Iterator is not specialized.
+  // TODO: Add IntIterator/LongIterator/DoubleIterator. This approach should be compatible with
+  // Java 8's manually specialized iterators and streams.
   def hasNext: Boolean
   def next(): A
   def foldLeft[B](z: B)(op: (B, A) => B): B =
@@ -107,5 +112,6 @@ object Iterator {
   def apply[A](xs: A*): Iterator[A] = new IndexedView[A] {
     val length = xs.length
     def apply(n: Int) = xs(n)
+    def elementClassTag = ClassTag.Any // not specialized -- Iterator doesn't care anyway
   }.iterator()
 }

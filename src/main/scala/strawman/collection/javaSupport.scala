@@ -2,11 +2,14 @@ package strawman.collection
 
 import strawman.collection.immutable.List
 
-import scala.{Array, Char, Int, AnyVal}
+import scala.{Array, Char, Int, Long, Double, Boolean, AnyVal, specialized}
 import scala.Predef.String
-import strawman.collection.mutable.{ArrayBuffer, Buildable, StringBuilder}
-
+import scala.annotation.unchecked.uncheckedVariance
 import scala.reflect.ClassTag
+
+import java.util.PrimitiveIterator
+
+import strawman.collection.mutable.{ArrayBuffer, Buildable, StringBuilder}
 
 class StringOps(val s: String)
   extends AnyVal with IterableOps[Char]
@@ -70,6 +73,7 @@ case class StringView(s: String) extends IndexedView[Char] {
   def length = s.length
   def apply(n: Int) = s.charAt(n)
   override def className = "StringView"
+  def elementClassTag: ClassTag[Char] = ClassTag.Char
 }
 
 
@@ -93,7 +97,7 @@ class ArrayOps[A](val xs: Array[A])
 
   def fromIterable[B: ClassTag](coll: Iterable[B]): Array[B] = coll.toArray[B]
 
-  protected[this] def newBuilder = new ArrayBuffer[A].mapResult(_.toArray(elemTag))
+  protected[this] def newBuilder = ArrayBuffer[A]()(elemTag).mapResult(_.toArray(elemTag))
 
   override def knownSize = xs.length
 
@@ -105,8 +109,49 @@ class ArrayOps[A](val xs: Array[A])
   def zip[B: ClassTag](xs: IterableOnce[B]): Array[(A, B)] = fromIterable(View.Zip(coll, xs))
 }
 
-case class ArrayView[A](xs: Array[A]) extends IndexedView[A] {
-  def length = xs.length
-  def apply(n: Int) = xs(n)
+class ArrayView[@specialized(Int, Long, Double) A](val elems: Array[A], val start: Int, val end: Int) extends IndexedView[A] { self =>
+  def this(elems: Array[A]) = this(elems, 0, elems.length)
+
+  def length = end - start
+
+  def apply(n: Int) = elems(start + n)
+
   override def className = "ArrayView"
+
+  def elementClassTag: ClassTag[A] = ClassTag(elems.getClass.getComponentType)
+
+  override def specializedIterator(implicit spec: Specialized[A@uncheckedVariance]): spec.Iterator = {
+    elementClassTag.runtimeClass match {
+      case java.lang.Integer.TYPE =>
+        val intElems = elems.asInstanceOf[Array[Int]]
+        def it: PrimitiveIterator.OfInt = new PrimitiveIterator.OfInt {
+          private var current = 0
+          def hasNext = current < self.length
+          def nextInt(): Int = {
+            val r = intElems(start + current)
+            current += 1
+            r
+          }
+        }
+        spec.asInstanceOf[Specialized[_]] match {
+          case Specialized.SpecializedInt =>
+            it
+          case Specialized.SpecializedLong =>
+            new PrimitiveIterator.OfLong {
+              override def nextLong(): Long = it.nextInt()
+              override def hasNext: Boolean = it.hasNext
+            }
+          case Specialized.SpecializedDouble =>
+            new PrimitiveIterator.OfDouble {
+              override def nextDouble(): Double = it.nextInt()
+              override def hasNext: Boolean = it.hasNext
+            }
+          case _ =>
+            super.specializedIterator(spec)
+        }
+      //TODO case java.lang.Integer.LONG =>
+      //TODO case java.lang.Integer.DOUBLE =>
+      case _ => super.specializedIterator(spec)
+    }
+  }.asInstanceOf[spec.Iterator]
 }

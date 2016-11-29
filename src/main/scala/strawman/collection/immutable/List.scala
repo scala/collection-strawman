@@ -3,9 +3,10 @@ package strawman.collection.immutable
 import scala.annotation.unchecked.uncheckedVariance
 import scala.Nothing
 import scala.Predef.???
+import scala.reflect.ClassTag
+
 import strawman.collection.{Iterable, IterableFactory, IterableOnce, LinearSeq, SeqLike}
 import strawman.collection.mutable.{Buildable, ListBuffer}
-
 
 /** Concrete collection type: List */
 sealed trait List[+A]
@@ -32,6 +33,8 @@ sealed trait List[+A]
   }
 
   override def className = "List"
+
+  def elementClassTag = ClassTag.Any // not specialized
 }
 
 case class :: [+A](x: A, private[collection] var next: List[A @uncheckedVariance]) // sound because `next` is used only locally
