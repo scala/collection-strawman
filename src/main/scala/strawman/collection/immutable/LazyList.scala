@@ -18,8 +18,6 @@ class LazyList[+A](expr: => LazyList.Evaluated[A])
   }
 
   override def isEmpty = force.isEmpty
-  override def head = force.get._1
-  override def tail = force.get._2
 
   def #:: [B >: A](elem: => B): LazyList[B] = new LazyList(Some((elem, this)))
 
@@ -34,6 +32,8 @@ class LazyList[+A](expr: => LazyList.Evaluated[A])
         case Some((hd, tl)) => s"$hd #:: $tl"
       }
     else "LazyList(?)"
+
+  def uncons: Option[(A, LazyList[A])] = force
 }
 
 object LazyList extends IterableFactory[LazyList] {

@@ -2,7 +2,7 @@ package strawman.collection
 
 import scala.annotation.unchecked.uncheckedVariance
 import scala.reflect.ClassTag
-import scala.{Int, Boolean, Array, Any, Unit, StringContext}
+import scala.{Int, Boolean, Array, Any, Unit, StringContext, Option}
 import java.lang.String
 
 import strawman.collection.mutable.{ArrayBuffer, StringBuilder}
@@ -69,8 +69,7 @@ trait IterableOps[+A] extends Any {
   /** Is the collection empty? */
   def isEmpty: Boolean = !iterator().hasNext
 
-  /** The first element of the collection. */
-  def head: A = iterator().next()
+  def headOption: Option[A] = iterator().headOption
 
   /** The number of elements in this collection, if it can be cheaply computed,
     *  -1 otherwise. Cheaply usually means: Not requiring a collection traversal.
@@ -165,8 +164,6 @@ trait IterableMonoTransforms[+A, +Repr] extends Any {
     */
   def drop(n: Int): Repr = fromIterableWithSameElemType(View.Drop(coll, n))
 
-  /** The rest of the collection without its first element. */
-  def tail: Repr = drop(1)
 }
 
 /** Transforms over iterables that can return collections of different element types.

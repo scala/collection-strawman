@@ -11,7 +11,7 @@ import org.junit.Test
 
 class StrawmanTest {
 
-  def seqOps(xs: Seq[Int]): Unit = {
+  def seqOps(xs: InhabitedSeq[Int]): Unit = {
     val x1 = xs.foldLeft("")(_ + _)
     val y1: String = x1
     val x2 = xs.foldRight("")(_ + _)
@@ -69,8 +69,6 @@ class StrawmanTest {
     val y2: String = x2
     val x3 = xs.indexWhere(_ % 2 == 0)
     val y3: Int = x3
-    val x4 = xs.head
-    val y4: Int = x4
     val x5 = xs.to(List)
     val y5: List[Int] = x5
     val (xs6, xs7) = xs.partition(_ % 2 == 0)
@@ -96,7 +94,6 @@ class StrawmanTest {
     println(x1)
     println(x2)
     println(x3)
-    println(x4)
     println(x5)
     println(xs6.to(List))
     println(xs7.to(List))
@@ -117,8 +114,6 @@ class StrawmanTest {
     val y2: String = x2
     val x3 = xs.indexWhere(_ % 2 == 0)
     val y3: Int = x3
-    val x4 = xs.head
-    val y4: Int = x4
     val x5 = xs.to(List)
     val y5: List[Char] = x5
     val (xs6, xs7) = xs.partition(_ % 2 == 0)
@@ -148,7 +143,6 @@ class StrawmanTest {
     println(x1)
     println(x2)
     println(x3)
-    println(x4)
     println(x5)
     println(xs6)
     println(xs7)
@@ -171,8 +165,6 @@ class StrawmanTest {
     val y2: String = x2
     val x3 = xs.indexWhere(_ % 2 == 0)
     val y3: Int = x3
-    val x4 = xs.head
-    val y4: Int = x4
     val x5 = xs.to(List)
     val y5: List[Int] = x5
     val (xs6, xs7) = xs.partition(_ % 2 == 0)
@@ -200,7 +192,6 @@ class StrawmanTest {
     println(x1)
     println(x2)
     println(x3)
-    println(x4)
     println(x5)
     println(xs6.view)
     println(xs7.view)
@@ -222,8 +213,6 @@ class StrawmanTest {
     val y2: String = x2
     val x3 = xs.indexWhere(_ % 2 == 0)
     val y3: Int = x3
-    val x4 = xs.head
-    val y4: Int = x4
     val x5 = xs.to(List)
     val y5: List[Int] = x5
     val (xs6, xs7) = xs.partition(_ % 2 == 0)
@@ -251,7 +240,6 @@ class StrawmanTest {
     println(x1)
     println(x2)
     println(x3)
-    println(x4)
     println(x5)
     println(xs6)
     println(xs6.to(List))
@@ -295,8 +283,8 @@ class StrawmanTest {
     val intsListBuf = ints.to(ListBuffer)
     val intsView = ints.view
     seqOps(ints)
-    seqOps(intsBuf)
-    seqOps(intsListBuf)
+//    seqOps(intsBuf)
+//    seqOps(intsListBuf)
     viewOps(intsView)
     stringOps("abc")
     arrayOps(Array(1, 2, 3))

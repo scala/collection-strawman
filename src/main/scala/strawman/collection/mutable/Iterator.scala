@@ -1,6 +1,6 @@
 package strawman.collection.mutable
 
-import scala.{Boolean, Int, Unit, Nothing, NoSuchElementException}
+import scala.{Boolean, Int, Unit, Nothing, NoSuchElementException, Option, Some, None}
 import strawman.collection.{IndexedView, IterableOnce}
 
 /** A core Iterator class */
@@ -26,6 +26,9 @@ trait Iterator[+A] { self =>
     while (hasNext) { len += 1; next() }
     len
   }
+
+  def headOption: Option[A] = if (hasNext) Some(next()) else None
+
   def filter(p: A => Boolean): Iterator[A] = new Iterator[A] {
     private var hd: A = _
     private var hdDefined: Boolean = false
