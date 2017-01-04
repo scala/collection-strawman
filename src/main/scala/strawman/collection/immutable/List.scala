@@ -1,16 +1,16 @@
 package strawman.collection.immutable
 
 import scala.annotation.unchecked.uncheckedVariance
-import scala.{Option, None, Nothing, Some}
+import scala.{Option, None, NoSuchElementException, Nothing, Some, UnsupportedOperationException}
 import scala.Predef.???
-import strawman.collection.{InhabitedLinearSeqFactory, InhabitedLinearSeqOps, InhabitedSeq, Iterable, IterableFactory, IterableOnce, LinearSeq, SeqLike, View}
+import strawman.collection.{InhabitedLinearSeqFactory, InhabitedLinearSeqOps, InhabitedSeq, Iterable, IterableFactory, IterableOnce, LinearSeq, LinearSeqLike, View}
 import strawman.collection.mutable.{Buildable, ListBuffer}
 
 
 /** Concrete collection type: List */
 sealed trait List[+A]
   extends LinearSeq[A]
-    with SeqLike[A, List]
+    with LinearSeqLike[A, List]
     with Buildable[A, List[A]] {
 
   def fromIterable[B](c: Iterable[B]): List[B] = List.fromIterable(c)
@@ -22,10 +22,8 @@ sealed trait List[+A]
 
   /** Prepend operation that avoids copying this list */
   def ++:[B >: A](prefix: List[B]): List[B] =
-    prefix match {
-      case Nil => this
-      case h :: t => h :: (t ++: this)
-    }
+    if (prefix.isEmpty) this
+    else prefix.unsafeHead :: (prefix.unsafeTail ++: this)
 
   /** When concatenating with another list `xs`, avoid copying `xs` */
   override def ++[B >: A](xs: IterableOnce[B]): List[B] = xs match {
@@ -40,15 +38,22 @@ case class :: [+A](x: A, private[collection] var next: List[A @uncheckedVariance
   extends List[A]
     with InhabitedSeq[A]
     with InhabitedLinearSeqOps[A, List[A]] {
+
   override def isEmpty = false
   def head = x
   def tail = next
+
   def uncons: Option[(A, List[A])] = Some((x, next))
+  override protected def unsafeHead: A = x
+  override protected def unsafeTail: List[A] = next
 }
 
 case object Nil extends List[Nothing] {
   override def isEmpty = true
+
   def uncons = None
+  override protected def unsafeHead: Nothing = throw new NoSuchElementException
+  override protected def unsafeTail: Nothing = throw new UnsupportedOperationException
 }
 
 object List extends IterableFactory[List] with InhabitedLinearSeqFactory[::] {

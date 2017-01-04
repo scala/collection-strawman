@@ -23,11 +23,7 @@ trait LinearSeq[+A] extends Seq[A] with LinearSeqLike[A, LinearSeq] { self =>
   def iterator() = new Iterator[A] {
     private[this] var current: LinearSeq[A] = self
     def hasNext = !current.isEmpty
-    def next() = {
-      val Some((head, tail)) = current.uncons
-      current = tail
-      head
-    }
+    def next() = { val r = current.unsafeHead; current = current.unsafeTail; r }
   }
 
   /** `length` is defined in terms of `iterator` */
@@ -39,7 +35,8 @@ trait LinearSeq[+A] extends Seq[A] with LinearSeqLike[A, LinearSeq] { self =>
   override def apply(n: Int): A = {
     if (n < 0) throw new IndexOutOfBoundsException(n.toString)
     val skipped = drop(n)
-    skipped.uncons.fold(throw new IndexOutOfBoundsException(n.toString))(_._1)
+    if (skipped.isEmpty) throw new IndexOutOfBoundsException(n.toString)
+    skipped.unsafeHead
   }
 }
 
@@ -81,6 +78,10 @@ trait LinearSeqLike[+A, +C[+X] <: LinearSeq[X]] extends SeqLike[A, C] {
   /** Extract the head and tail, if the collection is not empty */
   def uncons: Option[(A, C[A])]
 
+  /** To be overriden for performance in subclasses */
+  protected def unsafeHead: A = uncons.get._1
+  protected def unsafeTail: C[A] = uncons.get._2
+
   /** Optimized version of `drop` that avoids copying
     *  Note: `drop` is defined here, rather than in a trait like `LinearSeqMonoTransforms`,
     *  because the `...MonoTransforms` traits make no assumption about the type of `Repr`
@@ -89,17 +90,13 @@ trait LinearSeqLike[+A, +C[+X] <: LinearSeq[X]] extends SeqLike[A, C] {
     */
   override def drop(n: Int): C[A] = {
     def loop(n: Int, s: C[A]): C[A] = {
+      if (n <= 0) s
       // implicit contract to guarantee success of asInstanceOf:
       //   (1) coll is of type C[A]
       //   (2) The tail of a LinearSeq is of the same type as the type of the sequence itself
       // it's surprisingly tricky/ugly to turn this into actual types, so we
       // leave this contract implicit.
-      if (n <= 0) s else {
-        s.uncons match {
-          case None => s
-          case Some((_, t)) => loop(n - 1, t.asInstanceOf[C[A]])
-        }
-      }
+      else loop(n - 1, s.unsafeTail.asInstanceOf[C[A]])
     }
     loop(n, coll)
   }
