@@ -1,10 +1,10 @@
 package strawman.collection.mutable
 
 import scala.{AnyRef, Array, Boolean, Double, Int, Long, Unit, specialized}
-import scala.Predef.{classOf, intWrapper}
+import scala.Predef.{classOf, intWrapper, ???}
 import scala.annotation.unchecked.uncheckedVariance
 import scala.reflect.ClassTag
-import strawman.collection.{ArrayView, IndexedView, Iterable, IterableFactory, IterableOnce, Seq, SeqLike, Specialized}
+import strawman.collection.{ArrayView, IndexedView, Iterable, IterableFactory, IterableOnce, Seq, SeqLike, SpecializationUtil, Specialized}
 
 /** Concrete collection type: ArrayBuffer */
 class ArrayBuffer[@specialized(Int, Long, Double) A] private[collection] (initElems: Array[A], initLength: Int)
@@ -17,7 +17,7 @@ class ArrayBuffer[@specialized(Int, Long, Double) A] private[collection] (initEl
   private var start = 0
   private var end = initLength
 
-  def apply(n: Int) = elems(start + n).asInstanceOf[A]
+  def apply(n: Int) = elems(start + n)
 
   def elementClassTag: ClassTag[A] = ClassTag(elems.getClass.getComponentType)
 
@@ -67,6 +67,134 @@ class ArrayBuffer[@specialized(Int, Long, Double) A] private[collection] (initEl
       Array.copy(xs.elems, xs.start, elems, this.length, xs.length)
       new ArrayBuffer[B](elems, elems.length)
     case _ => super.++(xs)
+  }
+
+  /* overridden for specialization */
+  override def map[B](f: A => B): ArrayBuffer[B] = {
+    val length = this.length
+    val elems = this.elems
+    val start = this.start
+    var i = 0
+    // An alternative to using getSpecializedReturnType would be to map the first element unspecialized,
+    // use the runtime class of the resulting object for specialization, continue on the specialized path
+    // catching a possible ClassCastException to unspecialize later (by copying the already mapped values)
+    // if required. This would avoid the overhead of getSpecializedReturnType but it would also generate
+    // specialized collections from polymorphic mapping functions that happen to produce boxed primitive
+    // values.
+    val a = SpecializationUtil.getSpecializedReturnType(f).runtimeClass match {
+      case java.lang.Integer.TYPE =>
+        val ff = f.asInstanceOf[A => Int]
+        val a = new Array[Int](length)
+        while(i < length) {
+          a(i) = ff(elems(start + i))
+          i += 1
+        }
+        a
+      case java.lang.Long.TYPE =>
+        val ff = f.asInstanceOf[A => Long]
+        val a = new Array[Long](length)
+        while(i < length) {
+          a(i) = ff(elems(start + i))
+          i += 1
+        }
+        a
+      case java.lang.Double.TYPE =>
+        val ff = f.asInstanceOf[A => Double]
+        val a = new Array[Double](length)
+        while(i < length) {
+          a(i) = ff(elems(start + i))
+          i += 1
+        }
+        a
+      case _ =>
+        val ff = f.asInstanceOf[A => AnyRef]
+        val a = new Array[AnyRef](length)
+        while(i < length) {
+          // Note: Function1 is not specialized for AnyRef, so even if A is a primitive type
+          // we cannot call ff without boxing the argument.
+          a(i) = ff(elems(start + i))
+          i += 1
+        }
+        a
+    }
+    new ArrayBuffer[B](a.asInstanceOf[Array[B]], length)
+  }
+
+  /* overridden for specialization */
+  override def flatMap[B](f: A => IterableOnce[B]): ArrayBuffer[B] = {
+    val length = this.length
+    val elems = this.elems
+    val start = this.start
+    var buf = new Array[IterableOnce[B]](length)
+    var i = 0
+    var definiteSize = 0
+    var hasNonIterable, unspecialized = false
+    var bSpec: Specialized[B] = null
+    if(length == 0) ArrayBuffer.empty[B]
+    else {
+      while(i < length) {
+        // Note: Function1 is not specialized for AnyRef, so even if A is a primitive type
+        // we cannot call f without boxing the argument.
+        var it = f(elems(start + i))
+        buf(i) = it
+        it match {
+          case it: Iterable[_] =>
+            if(definiteSize != -1) {
+              val s = it.knownSize
+              if(s == -1) definiteSize = -1
+              else definiteSize += s
+            }
+            if(!unspecialized) {
+              val spec = Specialized.forClassTag(it.elementClassTag)
+              if(bSpec eq null) bSpec = spec.asInstanceOf[Specialized[B]]
+              else if(bSpec != spec) unspecialized = true
+            }
+          case _ =>
+            hasNonIterable = true
+            unspecialized = true
+            definiteSize = -1
+        }
+        i += 1
+      }
+      val sz = if(definiteSize != -1) definiteSize else scala.math.max(16, length)
+      i = 0
+      if(unspecialized || (bSpec eq null)) {
+        val a = new ArrayBuffer[AnyRef](new Array[AnyRef](sz), sz)
+        while(i < buf.length) {
+          val it = buf(i).iterator()
+          while(it.hasNext) a += it.next().asInstanceOf[AnyRef]
+          i += 1
+        }
+        a
+      } else bSpec match {
+        case bSpec @ Specialized.SpecializedInt =>
+          val a = new ArrayBuffer[Int](new Array[Int](sz), sz)
+          while(i < buf.length) {
+            val it = buf(i).asInstanceOf[Iterable[B]].specializedIterator(bSpec).asInstanceOf[java.util.PrimitiveIterator.OfInt]
+            while(it.hasNext) a += it.nextInt()
+            i += 1
+          }
+          a
+        case bSpec @ Specialized.SpecializedLong =>
+          val a = new ArrayBuffer[Long](new Array[Long](sz), sz)
+          while(i < buf.length) {
+            val it = buf(i).asInstanceOf[Iterable[B]].specializedIterator(bSpec).asInstanceOf[java.util.PrimitiveIterator.OfLong]
+            while(it.hasNext) a += it.nextLong()
+            i += 1
+          }
+          a
+        case bSpec @ Specialized.SpecializedDouble =>
+          val a = new ArrayBuffer[Double](new Array[Double](sz), sz)
+          while(i < buf.length) {
+            val it = buf(i).asInstanceOf[Iterable[B]].specializedIterator(bSpec).asInstanceOf[java.util.PrimitiveIterator.OfDouble]
+            while(it.hasNext) a += it.nextDouble()
+            i += 1
+          }
+          a
+        case _ =>
+          ??? // should not happen
+      }
+    }.asInstanceOf[ArrayBuffer[B]]
   }
 
   override def take(n: Int) = {

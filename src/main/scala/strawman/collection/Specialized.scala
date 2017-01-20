@@ -14,6 +14,13 @@ object Specialized extends SpecializedLowPriority {
   implicit case object SpecializedInt extends Specialized[Int] { type Iterator = PrimitiveIterator.OfInt }
   implicit case object SpecializedLong extends Specialized[Long] { type Iterator = PrimitiveIterator.OfLong }
   implicit case object SpecializedDouble extends Specialized[Double] { type Iterator = PrimitiveIterator.OfDouble }
+
+  private[collection] def forClassTag[T](ct: ClassTag[T]): Specialized[T] = (ct.runtimeClass match {
+    case java.lang.Integer.TYPE => SpecializedInt
+    case java.lang.Long.TYPE => SpecializedLong
+    case java.lang.Double.TYPE => SpecializedDouble
+    case _ => null
+  }).asInstanceOf[Specialized[T]]
 }
 
 trait SpecializedLowPriority {
@@ -56,7 +63,7 @@ private[collection] object SpecializationUtil {
   /** Return ClassTag.(Int, Double, Long, Any) depending on the specialized return type of the function */
   def getSpecializedReturnType[T1, R](f: T1 => R): ClassTag[_] = {
     val cl = f.getClass
-    // There is no common abstraction and anon function classes to not use specialized class names,
+    // There is no common abstraction and anon function classes do not use specialized class names,
     // so we have to check all classes individually
     if(function1ID.isAssignableFrom(cl) ||
       function1IF.isAssignableFrom(cl) ||
