@@ -2,13 +2,13 @@ package strawman.collection
 
 import strawman.collection.immutable.{LazyList, List}
 
-import scala.{Any, AnyRef, App, Int, Long}
-import scala.Predef.{ArrowAssoc, println}
+import scala.{Unit, Array, Any, AnyRef, App, Int, Long}
+import scala.Predef.{ArrowAssoc, String, println}
 
 import org.openjdk.jol.info.GraphLayout
 import strawman.collection.mutable.{ArrayBuffer, ListBuffer}
 
-object MemoryFootprint extends App {
+object MemoryFootprint {
 
   val sizes = scala.List(8, 64/*, 512, 4096, 32768, 262144, 2097152*/)
 
@@ -27,11 +27,11 @@ object MemoryFootprint extends App {
       "ArrayBuffer" -> benchmark(ArrayBuffer.fill(_)(obj)),
       "ListBuffer"  -> benchmark(ListBuffer.fill(_)(obj))
     )
-
-  // Print the results as a CSV document
-  println("Collection;" + sizes.mkString(";"))
-  for ((name, values) <- memories) {
-    println(name + ";" + values.mkString(";"))
+  def main(args: Array[String]): Unit = {
+    // Print the results as a CSV document
+    println("Collection;" + sizes.mkString(";"))
+    for ((name, values) <- memories) {
+      println(name + ";" + values.mkString(";"))
+    }
   }
-
 }

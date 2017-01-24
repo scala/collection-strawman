@@ -31,5 +31,6 @@ val memoryBenchmark =
   project.in(file("benchmarks/memory"))
     .dependsOn(collections)
     .settings(
-      libraryDependencies += "org.openjdk.jol" % "jol-core" % "0.7.1"
+      libraryDependencies += "org.openjdk.jol" % "jol-core" % "0.7.1",
+      fork in run := true
     )
