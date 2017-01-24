@@ -2,15 +2,14 @@ package strawman.collection
 
 import strawman.collection.immutable.{LazyList, List}
 
-import scala.{Unit, Array, Any, AnyRef, App, Int, Long}
+import scala.{Any, AnyRef, App, Array, Int, Long, Unit}
 import scala.Predef.{ArrowAssoc, String, println}
-
 import org.openjdk.jol.info.GraphLayout
 import strawman.collection.mutable.{ArrayBuffer, ListBuffer}
 
 object MemoryFootprint {
 
-  val sizes = scala.List(8, 64/*, 512, 4096, 32768, 262144, 2097152*/)
+  val sizes = scala.List(8, 64, 512, 4096/*, 32768, 262144, 2097152*/)
 
   val obj: AnyRef = null
 
