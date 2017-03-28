@@ -18,18 +18,18 @@ class HashSet2Benchmark {
   @Param(scala.Array("8", "64", "512", "4096", "32768", "262144"/*, "2097152"*/))
   var size: Int = _
 
-  var xs: HashSet[AnyRef] = _
+  var xs: HashSet2[AnyRef] = _
   var obj: Any = _
 
   @Setup(Level.Trial)
   def initData(): Unit = {
-    xs = HashSet((1 to size).map(_.toString): _*)
+    xs = HashSet2((1 to size).map(_.toString): _*)
     obj = ""
   }
 
   @Benchmark
   def cons(): Any = {
-    var ys = HashSet.empty[Any]
+    var ys = HashSet2.empty[Any]
     var i = 0
     while (i < size) {
       ys = ys + obj // Note: we should test different cases: colliding values as well as non-colliding values, etc.
@@ -42,7 +42,7 @@ class HashSet2Benchmark {
   def uncons(): Any = xs.tail
 
   @Benchmark
-  def concat(): Any = xs.++[AnyRef](xs)
+  def concat(): Any = xs ++ xs
 
   @Benchmark
   def foreach(): Any = {
