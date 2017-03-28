@@ -62,7 +62,11 @@ sealed trait HashSet[A]
 
 object HashSet extends IterableFactory[HashSet] {
 
-  def fromIterable[A](it: collection.Iterable[A]): HashSet[A] = newBuilder[A].++=(it).result
+  def fromIterable[A](it: collection.Iterable[A]): HashSet[A] =
+    it match {
+      case h: HashSet[A] => h
+      case _ => newBuilder[A].++=(it).result
+    }
 
   def newBuilder[A]: Builder[A, HashSet[A]] = new ImmutableSetBuilder[A, HashSet](empty[A])
 
