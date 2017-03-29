@@ -58,16 +58,14 @@ sealed trait HashSet2[A]
 
   protected final def elemHashCode(elem: A): Int = elem.##
 
-  override def ++ (that: collection.Set[A]): HashSet2[A] =
-    if (that.isEmpty) this
-    else {
-      var result = this
-      val it = that.iterator()
-      while (it.hasNext) {
-        result = result + it.next()
-      }
-      result
+  override def ++ (that: collection.Set[A]): HashSet2[A] = {
+    var result = this
+    val it = that.iterator()
+    while (it.hasNext) {
+      result = result + it.next()
     }
+    result
+  }
 
 }
 
