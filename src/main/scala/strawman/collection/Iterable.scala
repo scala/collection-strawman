@@ -226,6 +226,8 @@ trait IterableOps[+A, +CC[X], +C] extends Any {
   def slice(from: Int, until: Int): C =
     fromSpecificIterable(View.Take(View.Drop(coll, from), until - from))
 
+  def groupBy[K](f: A => K): immutable.Map[K, C]
+//  def groupBy[K, B](f: A => K)(g: A => B): immutable.Map[K, CC[B]]
 
   /** Map */
   def map[B](f: A => B): CC[B] = fromIterable(View.Map(coll, f))
@@ -266,6 +268,36 @@ trait Buildable[+A, +C] extends Any with IterableOps[A, AnyConstr, C]  {
     val l, r = newBuilder
     coll.iterator().foreach(x => (if (p(x)) l else r) += x)
     (l.result, r.result)
+  }
+
+  /** Partitions this $coll into a map of ${coll}s according to some discriminator function.
+    *
+    *  Note: this method is not re-implemented by views. This means
+    *        when applied to a view it will always force the view and
+    *        return a new $coll.
+    *
+    *  @param f     the discriminator function.
+    *  @tparam K    the type of keys returned by the discriminator function.
+    *  @return      A map from keys to ${coll}s such that the following invariant holds:
+    *               {{{
+    *                 (xs groupBy f)(k) = xs filter (x => f(x) == k)
+    *               }}}
+    *               That is, every key `k` is bound to a $coll of those elements `x`
+    *               for which `f(x)` equals `k`.
+    *
+    */
+  def groupBy[K](f: A => K): immutable.Map[K, C] = {
+    val m = mutable.Map.empty[K, Builder[A, C]]
+    for (elem <- coll) {
+      val key = f(elem)
+      val bldr = m.getOrElseUpdate(key, newBuilder)
+      bldr += elem
+    }
+    var result = immutable.Map.empty[K, C]
+    m.foreach { case (k, v) =>
+      result = result + ((k, v.result))
+    }
+    result
   }
 
   // one might also override other transforms here to avoid generating

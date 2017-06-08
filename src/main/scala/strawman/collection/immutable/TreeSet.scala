@@ -2,7 +2,7 @@ package strawman
 package collection
 package immutable
 
-import mutable.Builder
+import mutable.{Builder, ImmutableBuilder}
 import immutable.{RedBlackTree => RB}
 
 import scala.{Boolean, Int, NullPointerException, Option, Ordering, Some, Unit}
@@ -27,11 +27,22 @@ import scala.{Boolean, Int, NullPointerException, Option, Ordering, Some, Unit}
   */
 final class TreeSet[A] private (tree: RB.Tree[A, Unit])(implicit val ordering: Ordering[A])
   extends SortedSet[A]
-     with SortedSetOps[A, TreeSet, TreeSet[A]] {
+    with SortedSetOps[A, TreeSet, TreeSet[A]]
+    with Buildable[A, TreeSet[A]] {
 
   if (ordering eq null) throw new NullPointerException("ordering must not be null")
 
   def this()(implicit ordering: Ordering[A]) = this(null)(ordering)
+
+  def iterableFactory = Set
+
+  protected[this] def fromSpecificIterable(coll: strawman.collection.Iterable[A]): TreeSet[A] =
+    TreeSet.sortedFromIterable(coll)
+
+  protected[this] def sortedFromIterable[B : Ordering](coll: strawman.collection.Iterable[B]): TreeSet[B] =
+    TreeSet.sortedFromIterable(coll)
+
+  protected[this] def newBuilder: Builder[A, TreeSet[A]] = TreeSet.newBuilder()
 
   private def newSet(t: RB.Tree[A, Unit]) = new TreeSet[A](t)
 
@@ -60,14 +71,6 @@ final class TreeSet[A] private (tree: RB.Tree[A, Unit])(implicit val ordering: O
   def iterator(): Iterator[A] = RB.keysIterator(tree)
 
   def keysIteratorFrom(start: A): Iterator[A] = RB.keysIterator(tree, Some(start))
-
-  def iterableFactory = Set
-
-  protected[this] def fromSpecificIterable(coll: strawman.collection.Iterable[A]): TreeSet[A] =
-    TreeSet.sortedFromIterable(coll)
-
-  protected[this] def sortedFromIterable[B : Ordering](coll: strawman.collection.Iterable[B]): TreeSet[B] =
-    TreeSet.sortedFromIterable(coll)
 
   def unordered: Set[A] = this
 
@@ -111,6 +114,11 @@ object TreeSet extends SortedIterableFactory[TreeSet] {
     it match {
       case ts: TreeSet[E] => ts
       case _ => empty[E] ++ it
+    }
+
+  def newBuilder[A : Ordering](): Builder[A, TreeSet[A]] =
+    new ImmutableBuilder[A, TreeSet[A]](empty) {
+      def add(elem: A): this.type = { elems = elems + elem; this }
     }
 
 }

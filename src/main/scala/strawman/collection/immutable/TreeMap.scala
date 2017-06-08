@@ -4,7 +4,7 @@ package immutable
 
 import strawman.collection.SortedMapFactory
 import strawman.collection.immutable.{RedBlackTree => RB}
-import strawman.collection.mutable.Builder
+import strawman.collection.mutable.{Builder, ImmutableBuilder}
 
 import scala.{Int, Option, Ordering, SerialVersionUID, Serializable, Some, Unit}
 
@@ -32,6 +32,7 @@ import scala.{Int, Option, Ordering, SerialVersionUID, Serializable, Some, Unit}
 final class TreeMap[K, +V] private (tree: RB.Tree[K, V])(implicit val ordering: Ordering[K])
   extends SortedMap[K, V]
     with SortedMapOps[K, V, TreeMap, TreeMap[K, V]]
+    with Buildable[(K, V), TreeMap[K, V]]
     with Serializable {
 
   def this()(implicit ordering: Ordering[K]) = this(null)(ordering)
@@ -43,6 +44,8 @@ final class TreeMap[K, +V] private (tree: RB.Tree[K, V])(implicit val ordering: 
 
   protected[this] def sortedMapFromIterable[K2, V2](it: collection.Iterable[(K2, V2)])(implicit ordering: Ordering[K2]): TreeMap[K2, V2] =
     TreeMap.sortedFromIterable(it)
+
+  protected[this] def newBuilder: Builder[(K, V), TreeMap[K, V]] = TreeMap.newBuilder()
 
   def iterator(): collection.Iterator[(K, V)] = RB.iterator(tree)
 
@@ -108,6 +111,11 @@ object TreeMap extends SortedMapFactory[TreeMap] {
     it match {
       case tm: TreeMap[K, V] => tm
       case _ => empty[K, V] ++ it
+    }
+
+  def newBuilder[K : Ordering, V](): Builder[(K, V), TreeMap[K, V]] =
+    new ImmutableBuilder[(K, V), TreeMap[K, V]](empty) {
+      def add(elem: (K, V)): this.type = { elems = elems + elem; this }
     }
 
 }

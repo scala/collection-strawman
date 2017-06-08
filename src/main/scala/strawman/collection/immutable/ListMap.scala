@@ -16,7 +16,7 @@ import scala.annotation.tailrec
 import scala.{Any, AnyRef, Array, Boolean, Int, NoSuchElementException, None, Nothing, Option, SerialVersionUID, Serializable, Some, sys}
 import java.lang.Integer
 
-import strawman.collection.mutable.Builder
+import strawman.collection.mutable.{Builder, ImmutableBuilder}
 
 /**
   * This class implements immutable maps using a list-based data structure. List map iterators and
@@ -45,8 +45,9 @@ import strawman.collection.mutable.Builder
 @SerialVersionUID(301002838095710379L)
 sealed class ListMap[K, +V]
   extends Map[K, V]
-     with MapOps[K, V, ListMap, ListMap[K, V]]
-     with Serializable {
+    with MapOps[K, V, ListMap, ListMap[K, V]]
+    with Buildable[(K, V), ListMap[K, V]]
+    with Serializable {
 
   def iterableFactory = List
 
@@ -57,6 +58,8 @@ sealed class ListMap[K, +V]
       case lm: ListMap[K, V] => lm
       case _ => ListMap.fromIterable(coll)
     }
+
+  protected[this] def newBuilder: Builder[(K, V), ListMap[K, V]] = ListMap.newBuilder()
 
   def empty: ListMap[K, V] = ListMap.empty[K, V]
 
@@ -165,6 +168,11 @@ object ListMap extends MapFactory[ListMap] {
     it match {
       case lm: ListMap[K, V] => lm
       case _ => empty ++ it
+    }
+
+  def newBuilder[K, V](): Builder[(K, V), ListMap[K, V]] =
+    new ImmutableBuilder[(K, V), ListMap[K, V]](empty) {
+      def add(elem: (K, V)): this.type = { elems = elems + elem; this }
     }
 
 }

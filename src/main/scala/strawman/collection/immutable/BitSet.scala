@@ -3,7 +3,7 @@ package collection
 package immutable
 
 import BitSetOps.{LogWL, updateArray}
-import mutable.Builder
+import mutable.{Builder, ImmutableBuilder}
 
 import scala.{Array, Boolean, Int, Long, Ordering, SerialVersionUID, Serializable, Unit}
 import scala.Predef.require
@@ -22,6 +22,7 @@ sealed abstract class BitSet
     with collection.BitSet
     with SortedSetOps[Int, SortedSet, BitSet]
     with collection.BitSetOps[BitSet]
+    with Buildable[Int, BitSet]
     with Serializable {
 
   def empty: BitSet = BitSet.empty
@@ -30,7 +31,7 @@ sealed abstract class BitSet
 
   protected[this] def fromSpecificIterable(coll: collection.Iterable[Int]): BitSet = BitSet.fromSpecificIterable(coll)
   protected[this] def sortedFromIterable[B : Ordering](it: collection.Iterable[B]): SortedSet[B] = SortedSet.sortedFromIterable(it)
-
+  protected[this] def newBuilder: Builder[Int, BitSet] = BitSet.newBuilder()
 
   protected[collection] def fromBitMaskNoCopy(elems: Array[Long]): BitSet = BitSet.fromBitMaskNoCopy(elems)
 
@@ -66,6 +67,13 @@ object BitSet extends SpecificIterableFactory[Int, BitSet] {
       case _          => empty.++(it)
     }
 
+  def empty: BitSet = new BitSet1(0L)
+
+  def newBuilder(): Builder[Int, BitSet] =
+    new ImmutableBuilder[Int, BitSet](empty) {
+      def add(elem: Int): this.type = { elems = elems + elem; this }
+    }
+
   private def createSmall(a: Long, b: Long): BitSet = if (b == 0L) new BitSet1(a) else new BitSet2(a, b)
 
   /** A bitset containing all the bits in an array */
@@ -90,8 +98,6 @@ object BitSet extends SpecificIterableFactory[Int, BitSet] {
     else if (len == 2) createSmall(elems(0), elems(1))
     else new BitSetN(elems)
   }
-
-  def empty: BitSet = new BitSet1(0L)
 
   @SerialVersionUID(2260107458435649300L)
   class BitSet1(val elems: Long) extends BitSet {

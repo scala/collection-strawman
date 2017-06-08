@@ -1,7 +1,7 @@
 package strawman.collection.immutable
 
-import strawman.collection.mutable.ArrayBuffer
-import strawman.collection.{IterableFactory, IterableOnce, Iterator, View}
+import strawman.collection.mutable.{ArrayBuffer, Builder, ImmutableBuilder}
+import strawman.collection.{Buildable, IterableFactory, IterableOnce, Iterator, View}
 
 import scala.{Any, Boolean, Int, Nothing}
 import scala.runtime.ScalaRunTime
@@ -12,11 +12,16 @@ import scala.Predef.{???, intWrapper}
   *
   * Supports efficient indexed access and has a small memory footprint.
   */
-class ImmutableArray[+A] private (private val elements: scala.Array[Any]) extends IndexedSeq[A] with SeqOps[A, ImmutableArray, ImmutableArray[A]] {
+class ImmutableArray[+A] private (private val elements: scala.Array[Any])
+  extends IndexedSeq[A]
+    with IndexedSeqOps[A, ImmutableArray, ImmutableArray[A]]
+    with Buildable[A, ImmutableArray[A]] {
 
   def iterableFactory: IterableFactory[ImmutableArray] = ImmutableArray
 
   protected[this] def fromSpecificIterable(coll: strawman.collection.Iterable[A]): ImmutableArray[A] = fromIterable(coll)
+
+  protected[this] def newBuilder: Builder[A, ImmutableArray[A]] = ImmutableArray.newBuilder()
 
   def length: Int = elements.length
 
@@ -87,6 +92,10 @@ object ImmutableArray extends IterableFactory[ImmutableArray] {
 
   def fromIterable[A](it: strawman.collection.Iterable[A]): ImmutableArray[A] =
     new ImmutableArray(ArrayBuffer.fromIterable(it).asInstanceOf[ArrayBuffer[Any]].toArray)
+
+  def newBuilder[A](): Builder[A, ImmutableArray[A]] =
+    ArrayBuffer.newBuilder[A]()
+      .mapResult(b => new ImmutableArray[A](b.asInstanceOf[ArrayBuffer[Any]].toArray))
 
   override def fill[A](n: Int)(elem: => A): ImmutableArray[A] = tabulate(n)(_ => elem)
 

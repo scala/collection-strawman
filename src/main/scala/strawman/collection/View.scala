@@ -1,5 +1,7 @@
 package strawman.collection
 
+import strawman.collection.mutable.ArrayBuffer
+
 import scala.{Any, Boolean, Equals, Int, Nothing, annotation}
 import scala.Predef.intWrapper
 
@@ -13,6 +15,20 @@ trait View[+A] extends Iterable[A] with IterableOps[A, View, View[A]] {
     fromIterable(coll)
 
   override def className = "View"
+
+  def groupBy[K](f: (A) => K): immutable.Map[K, View[A]] = {
+    val m = mutable.Map.empty[K, ArrayBuffer[A]]
+    for (elem <- coll) {
+      val key = f(elem)
+      val bldr = m.getOrElseUpdate(key, ArrayBuffer.empty)
+      bldr += elem
+    }
+    var result = immutable.Map.empty[K, View[A]]
+    m.foreach { case (k, v) =>
+      result = result + ((k, v.view))
+    }
+    result
+  }
 }
 
 /** This object reifies operations on views as case classes */
