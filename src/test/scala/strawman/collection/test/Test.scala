@@ -359,7 +359,7 @@ class StrawmanTest {
   }
 
   def sortedSets(xs: immutable.SortedSet[Int]): Unit = {
-    val xs1 = xs.map((x: Int) => x.toString) // TODO Remove type annotation when https://github.com/scala/scala/pull/5708 is published
+    val xs1 = xs.map(x => x.toString)
     val xs2: immutable.SortedSet[String] = xs1
     val l = List(1,2,3)
     val s1 = l.to(immutable.TreeSet)
@@ -369,10 +369,10 @@ class StrawmanTest {
    }
 
   def mapOps(xs: Map[Int, String]): Unit = {
-    val xs1 = xs.map ({ case (k, v) => (v, k) }: scala.PartialFunction[(Int, String), (String, Int)])
+    val xs1 = xs.map ({ case (k, v) => (v, k) })
     val xs2: strawman.collection.Map[String, Int] = xs1
     val xs3 = xs.map(kv => (kv._2, kv._1))
-    val xs4: strawman.collection.Iterable[(String, Int)] = xs3
+    val xs4: Map[String, Int] = xs3
     println(xs1)
     println(xs2)
     println(xs3)
@@ -386,11 +386,11 @@ class StrawmanTest {
     val xs2: immutable.SortedMap[String, Int] = xs1
     val xs3 = xs.map(kv => kv._1)
     // val xs4: immutable.Iterable[String] = xs3  // FIXME: does not work under dotty, we get a collection.Iterable
-    val xs5 = xs.map ({ case (k, v) => (v, k) }: scala.PartialFunction[(String, Int), (Int, String)])
+    val xs5 = xs.map ({ case (k, v) => (v, k) })
     val xs6: immutable.SortedMap[Int, String] = xs5
     class Foo
 //    val xs7 = xs.map((k: String, v: Int) => (new Foo, v)) Error: No implicit Ordering defined for Foo
-    val xs7 = (xs: immutable.Map[String, Int]) map ({ case (k, v) => (new Foo, v) }: scala.PartialFunction[(String, Int), (Foo, Int)])
+    val xs7 = (xs: immutable.Map[String, Int]) map ({ case (k, v) => (new Foo, v) })
     val xs8: immutable.Map[Foo, Int] = xs7
     val xs9 = xs6.to(List).to(mutable.HashMap)
     val xs9t: mutable.HashMap[Int, String] = xs9
@@ -406,7 +406,7 @@ class StrawmanTest {
     val b = xs.subsetOf(zs)
     val xs5 = xs.map(x => x + 1)
     val xs6: immutable.BitSet = xs5
-    val xs7 = (xs: immutable.SortedSet[Int]).map((x: Int) => x.toString)
+    val xs7 = (xs: immutable.SortedSet[Int]).map(x => x.toString)
     val xs8: immutable.SortedSet[String] = xs7
     val xs9 = (xs: immutable.Set[Int]).map(x => Left(x): Either[Int, Nothing])
     //val xs10: immutable.Set[Either[Int, Nothing]] = xs9

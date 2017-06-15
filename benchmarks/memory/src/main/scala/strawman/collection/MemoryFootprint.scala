@@ -2,7 +2,7 @@ package bench
 
 import strawman.collection.immutable.{LazyList, List, Range, NumericRange}
 
-import scala.{Any, AnyRef, App, Int, Long, Seq, StringContext}
+import scala.{Any, AnyRef, App, Int, List => SList, Long, StringContext}
 import scala.Predef.{ArrowAssoc, println, intWrapper}
 import scala.compat.Platform
 import java.lang.Runtime
@@ -54,24 +54,25 @@ object MemoryFootprint extends App {
 
   // We use a format similar to the one used by JMH so that
   // our charts can be generated in the same way
-  import jawn.ast._
+  import org.json4s.native.JsonMethods._
+  import org.json4s.JsonAST._
   val report =
-    JArray.fromSeq(
+    JArray(
       memories.flatMap { case (name, values) =>
         values.map { case (size, value) =>
-          JObject.fromSeq(Seq(
+          JObject(
             "benchmark" -> JString(s"$name.memory-footprint"),
-            "params" -> JObject.fromSeq(Seq(
+            "params" -> JObject(
               "size" -> JString(size.toString)
-            )),
-            "primaryMetric" -> JObject.fromSeq(Seq(
-              "score" -> JNum(value),
-              "scoreConfidence" -> JArray.fromSeq(Seq(JNum(value), JNum(value)))
-            ))
-          ))
+            ),
+            "primaryMetric" -> JObject(
+              "score" -> JLong(value),
+              "scoreConfidence" -> JArray(SList(JLong(value), JLong(value)))
+            )
+          )
         }
-      }.to[Seq]
+      }.to[SList]
     )
-  Files.write(reportPath, FastRenderer.render(report).getBytes)
+  Files.write(reportPath, compact(render(report)).getBytes)
 
 }
