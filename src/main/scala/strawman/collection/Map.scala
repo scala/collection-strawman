@@ -16,7 +16,7 @@ trait MapOps[K, +V, +CC[X, Y] <: Map[X, Y], +C <: Map[K, V]]
     with PartialFunction[K, V]
     with Equals {
 
-  protected[this] def coll: Map[K, V]
+  protected[this] def iterable: Map[K, V]
 
   /** Similar to fromIterable, but returns a Map collection type */
   protected[this] def mapFromIterable[K2, V2](it: Iterable[(K2, V2)]): CC[K2, V2]
@@ -96,11 +96,11 @@ trait MapOps[K, +V, +CC[X, Y] <: Map[X, Y], +C <: Map[K, V]]
     */
   def empty: C
 
-  def map[K2, V2](f: ((K, V)) => (K2, V2)): CC[K2, V2] = mapFromIterable(View.Map(coll, f))
+  def map[K2, V2](f: ((K, V)) => (K2, V2)): CC[K2, V2] = mapFromIterable(View.Map(iterable, f))
 
-  def flatMap[K2, V2](f: ((K, V)) => IterableOnce[(K2, V2)]): CC[K2, V2] = mapFromIterable(View.FlatMap(coll, f))
+  def flatMap[K2, V2](f: ((K, V)) => IterableOnce[(K2, V2)]): CC[K2, V2] = mapFromIterable(View.FlatMap(iterable, f))
 
-  def concat [V2 >: V](xs: collection.Iterable[(K, V2)]): CC[K, V2] = mapFromIterable(View.Concat(coll, xs))
+  def concat [V2 >: V](xs: collection.Iterable[(K, V2)]): CC[K, V2] = mapFromIterable(View.Concat(iterable, xs))
 
   /** Alias for `concat` */
   /*@`inline` final*/ def ++ [V2 >: V](xs: collection.Iterable[(K, V2)]): CC[K, V2] = concat(xs)
@@ -128,7 +128,7 @@ trait MapOps[K, +V, +CC[X, Y] <: Map[X, Y], +C <: Map[K, V]]
       false
   }
 
-  override def hashCode(): Int = Set.unorderedHash(coll, "Map".##)
+  override def hashCode(): Int = Set.unorderedHash(iterable, "Map".##)
 
 }
 

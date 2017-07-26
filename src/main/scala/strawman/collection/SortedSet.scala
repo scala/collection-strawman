@@ -16,13 +16,13 @@ trait SortedSetOps[A, +CC[X], +C <: SortedSet[A]]
   def lastKey: A = last
 
   /** Map */
-  def map[B : Ordering](f: A => B): CC[B] = sortedFromIterable(View.Map(coll, f))
+  def map[B : Ordering](f: A => B): CC[B] = sortedFromIterable(View.Map(iterable, f))
 
   /** Flatmap */
-  def flatMap[B : Ordering](f: A => IterableOnce[B]): CC[B] = sortedFromIterable(View.FlatMap(coll, f))
+  def flatMap[B : Ordering](f: A => IterableOnce[B]): CC[B] = sortedFromIterable(View.FlatMap(iterable, f))
 
   /** Zip. Interesting because it requires to align to source collections. */
-  def zip[B](xs: IterableOnce[B])(implicit ev: Ordering[(A @uncheckedVariance, B)]): CC[(A @uncheckedVariance, B)] = sortedFromIterable(View.Zip(coll, xs))
+  def zip[B](xs: IterableOnce[B])(implicit ev: Ordering[(A @uncheckedVariance, B)]): CC[(A @uncheckedVariance, B)] = sortedFromIterable(View.Zip(iterable, xs))
   // sound bcs of VarianceNote
 
   def collect[B: Ordering](pf: scala.PartialFunction[A, B]): CC[B] = flatMap(a =>

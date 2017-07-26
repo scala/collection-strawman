@@ -15,7 +15,7 @@ trait SetOps[A, +CC[X], +C <: Set[A]]
      with (A => Boolean)
      with Equals {
 
-  protected[this] def coll: C
+  protected[this] def iterable: C
 
   def contains(elem: A): Boolean
 
@@ -43,7 +43,7 @@ trait SetOps[A, +CC[X], +C <: Set[A]]
     */
   def subsets(len: Int): Iterator[C] = {
     if (len < 0 || len > size) Iterator.empty
-    else new SubsetsItr(coll.to(IndexedSeq), len)
+    else new SubsetsItr(iterable.to(IndexedSeq), len)
   }
 
   /** An iterator over all subsets of this set.
@@ -51,7 +51,7 @@ trait SetOps[A, +CC[X], +C <: Set[A]]
     *  @return     the iterator.
     */
   def subsets(): Iterator[C] = new Iterator[C] {
-    private val elms = coll.to(IndexedSeq)
+    private val elms = iterable.to(IndexedSeq)
     private var len = 0
     private var itr: Iterator[C] = Iterator.empty
 
@@ -110,12 +110,12 @@ trait SetOps[A, +CC[X], +C <: Set[A]]
       case set: Set[A] =>
         (this eq set) ||
           (set canEqual this) &&
-            (coll.size == set.size) &&
+            (iterable.size == set.size) &&
             (this subsetOf set)
       case _ => false
     }
 
-  override def hashCode(): Int = Set.setHash(coll)
+  override def hashCode(): Int = Set.setHash(iterable)
 
   /** Computes the intersection between this set and another set.
     *
@@ -152,7 +152,7 @@ trait SetOps[A, +CC[X], +C <: Set[A]]
     *  @param that     the collection containing the elements to add.
     *  @return a new $coll with the given elements added, omitting duplicates.
     */
-  def concat(that: collection.IterableOnce[A]): C = fromSpecificIterable(View.Concat(coll, that))
+  def concat(that: collection.IterableOnce[A]): C = fromSpecificIterable(View.Concat(iterable, that))
 
   /** Alias for `concat` */
   @`inline` final def ++ (that: collection.IterableOnce[A]): C = concat(that)

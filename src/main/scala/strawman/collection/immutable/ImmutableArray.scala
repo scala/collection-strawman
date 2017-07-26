@@ -64,7 +64,7 @@ class ImmutableArray[+A] private[collection] (private val elements: scala.Array[
         java.lang.System.arraycopy(bs.elements, 0, dest, length, bs.length)
         new ImmutableArray(dest)
       case _ =>
-        ImmutableArray.fromIterable(View.Concat(coll, xs))
+        ImmutableArray.fromIterable(View.Concat(iterable, xs))
     }
 
   override def zip[B](xs: IterableOnce[B]): ImmutableArray[(A, B)] =
@@ -74,13 +74,13 @@ class ImmutableArray[+A] private[collection] (private val elements: scala.Array[
           (apply(i), bs(i))
         }
       case _ =>
-        ImmutableArray.fromIterable(View.Zip(coll, xs))
+        ImmutableArray.fromIterable(View.Zip(iterable, xs))
     }
 
-  override def filter(p: A => Boolean): ImmutableArray[A] = ImmutableArray.fromIterable(View.Filter(coll, p))
+  override def filter(p: A => Boolean): ImmutableArray[A] = ImmutableArray.fromIterable(View.Filter(iterable, p))
 
   override def partition(p: A => Boolean): (ImmutableArray[A], ImmutableArray[A]) = {
-    val pn = View.Partition(coll, p)
+    val pn = View.Partition(iterable, p)
     (ImmutableArray.fromIterable(pn.first), ImmutableArray.fromIterable(pn.second))
   }
 
