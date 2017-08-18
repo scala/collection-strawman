@@ -17,14 +17,14 @@ trait StrictOptimizedIterableOps[+A, +CC[_], +C]
   /** Optimized, push-based version of `partition`. */
   override def partition(p: A => Boolean): (C, C) = {
     val l, r = newSpecificBuilder()
-    toIterable.iterator().foreach(x => (if (p(x)) l else r) += x)
+    iterator().foreach(x => (if (p(x)) l else r) += x)
     (l.result(), r.result())
   }
 
   override def span(p: A => Boolean): (C, C) = {
     val first = newSpecificBuilder()
     val second = newSpecificBuilder()
-    val it = toIterable.iterator()
+    val it = iterator()
     var inFirst = true
     while (it.hasNext && inFirst) {
       val a = it.next()

@@ -23,6 +23,17 @@ trait SortedMapOps[K, +V, +CC[X, Y] <: Map[X, Y] with SortedMapOps[X, Y, CC, _],
   def firstKey: K = head._1
   def lastKey: K = last._1
 
+  def rangeTo(to: K): C = {
+    val i = keySet.from(to).iterator()
+    if (i.isEmpty) return coll
+    val next = i.next()
+    if (ordering.compare(next, to) == 0)
+      if (i.isEmpty) coll
+      else until(i.next())
+    else
+      until(next)
+  }
+
   override def keySet: SortedSet[K] = new KeySortedSet
 
   /** The implementation class of the set returned by `keySet` */

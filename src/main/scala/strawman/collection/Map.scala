@@ -104,7 +104,7 @@ trait MapOps[K, +V, +CC[X, Y] <: MapOps[X, Y, CC, _], +C <: MapOps[K, V, CC, C]]
     *  @return an iterator over all keys.
     */
   def keysIterator(): Iterator[K] = new Iterator[K] {
-    val iter = toIterable.iterator()
+    val iter = MapOps.this.iterator()
     def hasNext = iter.hasNext
     def next() = iter.next()._1
   }
@@ -114,7 +114,7 @@ trait MapOps[K, +V, +CC[X, Y] <: MapOps[X, Y, CC, _], +C <: MapOps[K, V, CC, C]]
     *  @return an iterator over all values that are associated with some key in this map.
     */
   def valuesIterator(): Iterator[V] = new Iterator[V] {
-    val iter = toIterable.iterator()
+    val iter = MapOps.this.iterator()
     def hasNext = iter.hasNext
     def next() = iter.next()._2
   }
@@ -215,7 +215,9 @@ trait MapOps[K, +V, +CC[X, Y] <: MapOps[X, Y, CC, _], +C <: MapOps[K, V, CC, C]]
   override def hashCode(): Int = Set.unorderedHash(toIterable, "Map".##)
 
   override def mkString(start: String, sep: String, end: String): String =
-    toIterable.iterator().map { case (k, v) => s"$k -> $v" }.mkString(start, sep, end)
+    iterator().map { case (k, v) => s"$k -> $v" }.mkString(start, sep, end)
+
+  override def toString: String = super[IterableOps].toString
 
 }
 

@@ -63,7 +63,7 @@ trait SeqOps[+A, +CC[X], +C] extends Any
     *         index `offset`, otherwise `false`.
     */
   def startsWith[B >: A](that: Seq[B], offset: Int = 0): Boolean = {
-    val i = toIterable.iterator() drop offset
+    val i = iterator() drop offset
     val j = that.iterator()
     while (j.hasNext && i.hasNext)
       if (i.next() != j.next())
@@ -78,7 +78,7 @@ trait SeqOps[+A, +CC[X], +C] extends Any
     *  @return `true` if this $coll has `that` as a suffix, `false` otherwise.
     */
   def endsWith[B >: A](that: Seq[B]): Boolean = {
-    val i = toIterable.iterator().drop(length - that.length)
+    val i = iterator().drop(length - that.length)
     val j = that.iterator()
     while (i.hasNext && j.hasNext)
       if (i.next() != j.next())
@@ -107,7 +107,7 @@ trait SeqOps[+A, +CC[X], +C] extends Any
     *  @return  the index `>= from` of the first element of this $coll that satisfies the predicate `p`,
     *           or `-1`, if none exists.
     */
-  def indexWhere(p: A => Boolean, from: Int = 0): Int = toIterable.iterator().indexWhere(p, from)
+  def indexWhere(p: A => Boolean, from: Int = 0): Int = iterator().indexWhere(p, from)
 
   /** Finds index of first occurrence of some value in this $coll after or at some start index.
     *
@@ -434,7 +434,7 @@ trait SeqOps[+A, +CC[X], +C] extends Any
     * as those of `that`?
     */
   def sameElements[B >: A](that: IterableOnce[B]): Boolean =
-    toIterable.iterator().sameElements(that)
+    iterator().sameElements(that)
 
   /** Method called from equality methods, so that user-defined subclasses can
     *  refuse to be equal to other collections of the same kind.

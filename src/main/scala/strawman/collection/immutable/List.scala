@@ -331,7 +331,7 @@ sealed trait List[+A]
   override def className = "List"
 }
 
-case class :: [+A](x: A, private[collection] var next: List[A @uncheckedVariance]) // sound because `next` is used only locally
+case class :: [+A](x: A, private[strawman] var next: List[A @uncheckedVariance]) // sound because `next` is used only locally
   extends List[A] {
   override def isEmpty: Boolean = false
   override def nonEmpty: Boolean = true

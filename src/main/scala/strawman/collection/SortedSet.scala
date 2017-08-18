@@ -17,6 +17,17 @@ trait SortedSetOps[A, +CC[X] <: SortedSet[X], +C <: SortedSetOps[A, CC, C]]
   def firstKey: A = head
   def lastKey: A = last
 
+  def rangeTo(to: A): C = {
+    val i = from(to).iterator()
+    if (i.isEmpty) return coll
+    val next = i.next()
+    if (ordering.compare(next, to) == 0)
+      if (i.isEmpty) coll
+      else until(i.next())
+    else
+      until(next)
+  }
+
   override def withFilter(p: A => Boolean): SortedWithFilter = new SortedWithFilter(p)
 
   /** Specialize `WithFilter` for sorted collections
