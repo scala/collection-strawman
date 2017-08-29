@@ -1,20 +1,35 @@
 package strawman
 package collection
 
-import scala.{AnyVal, Array, ArrayIndexOutOfBoundsException, Char, Int, throws}
+import scala.{AnyVal, Array, ArrayIndexOutOfBoundsException, Int, throws, Boolean, Serializable, Unit, `inline`}
 import scala.Predef.???
 import mutable.{ArrayBuffer, GrowableBuilder}
-
+import immutable.ImmutableArray
 import scala.reflect.ClassTag
 
-class ArrayOps[A](val xs: Array[A])
-  extends AnyVal
-    with IterableOnce[A]
-    with IndexedSeqOps[A, immutable.IndexedSeq, Array[A]]
-    with StrictOptimizedIterableOps[A, Seq, Array[A]]
-    with ArrayLike[A] {
+object ArrayOps {
+  class WithFilter[A](p: A => Boolean, ao: ArrayOps[A]) extends collection.WithFilter[A, immutable.IndexedSeq] {
+    protected[this] def filtered = View.Filter(ao.toIterable, p, isFlipped = false)
+    def map[B](f: A => B): immutable.IndexedSeq[B] = ao.iterableFactory.from(View.Map(filtered, f))
+    def flatMap[B](f: A => IterableOnce[B]): immutable.IndexedSeq[B] = ao.iterableFactory.from(View.FlatMap(filtered, f))
+    def foreach[U](f: A => U): Unit = filtered.foreach(f)
+    def map[B: ClassTag](f: A => B): Array[B] = ao.fromTaggedIterable(View.Map(filtered, f))
+    def flatMap[B: ClassTag](f: A => IterableOnce[B]): Array[B] = ao.fromTaggedIterable(View.FlatMap(filtered, f))
+    def withFilter(q: A => Boolean): WithFilter[A] = new WithFilter[A](a => p(a) && q(a), ao)
+  }
+}
 
-  def toIterable = ArrayView(xs)
+class ArrayOps[A](val xs: Array[A]) extends AnyVal
+  with IterableOnce[A]
+  with IndexedSeqOps[A, immutable.IndexedSeq, Array[A]]
+  with StrictOptimizedIterableOps[A, Seq, Array[A]]
+  with ArrayLike[A] {
+
+  protected def fromTaggedIterable[B: ClassTag](coll: Iterable[B]): Array[B] = coll.toArray[B]
+
+  override def withFilter(p: A => Boolean): ArrayOps.WithFilter[A] = new ArrayOps.WithFilter[A](p, this)
+
+  def toIterable: IndexedSeq[A] = ImmutableArray.wrapArray(xs)
   protected[this] def coll: Array[A] = xs
   override def toSeq: immutable.Seq[A] = fromIterable(toIterable)
 
@@ -22,13 +37,10 @@ class ArrayOps[A](val xs: Array[A])
   @throws[ArrayIndexOutOfBoundsException]
   def apply(i: Int) = xs.apply(i)
 
-  override def view = ArrayView(xs)
-
   def elemTag: ClassTag[A] = ClassTag(xs.getClass.getComponentType)
 
   def iterableFactory = immutable.IndexedSeq
 
-  protected[this] def fromTaggedIterable[B: ClassTag](coll: Iterable[B]): Array[B] = coll.toArray[B]
   protected[this] def fromSpecificIterable(coll: Iterable[A]): Array[A] = coll.toArray[A](elemTag)
 
   protected[this] def newSpecificBuilder() = ArrayBuffer.newBuilder[A]().mapResult(_.toArray(elemTag))
@@ -54,11 +66,8 @@ class ArrayOps[A](val xs: Array[A])
 
   def zip[B: ClassTag](that: Iterable[B]): Array[(A, B)] = fromTaggedIterable(View.Zip(toIterable, that))
 
-}
-
-case class ArrayView[A](xs: Array[A]) extends IndexedView[A] {
-  def length = xs.length
-  @throws[ArrayIndexOutOfBoundsException]
-  def apply(n: Int) = xs(n)
-  override def className = "ArrayView"
+  def append[B >: A : ClassTag](x: B): Array[B] = fromTaggedIterable(View.Append(toIterable, x))
+  @`inline` final def :+ [B >: A : ClassTag](x: B): Array[B] = append(x)
+  def prepend[B >: A : ClassTag](x: B): Array[B] = fromTaggedIterable(View.Prepend(x, toIterable))
+  @`inline` final def +: [B >: A : ClassTag](x: B): Array[B] = prepend(x)
 }

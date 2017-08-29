@@ -104,7 +104,7 @@ class LowPriority {
   import strawman.collection._
 
   /** Convert array to iterable via view. Lower priority than ArrayOps */
-  implicit def arrayToView[T](xs: Array[T]): ArrayView[T] = ArrayView[T](xs)
+  implicit def arrayToImmutableArray[T](xs: Array[T]): IndexedSeq[T] = immutable.ImmutableArray.wrapArray[T](xs)
 
   /** Convert string to iterable via view. Lower priority than StringOps */
   implicit def stringToView(s: String): immutable.StringView = new immutable.StringView(s)

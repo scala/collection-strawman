@@ -4,9 +4,11 @@ package collection.immutable
 import strawman.collection.mutable.{ArrayBuffer, Builder}
 import strawman.collection.{IterableOnce, Iterator, SeqFactory, StrictOptimizedSeqFactory, View}
 
-import scala.{Any, ArrayIndexOutOfBoundsException, Boolean, Int, Nothing, UnsupportedOperationException, throws}
+import scala.{Any, ArrayIndexOutOfBoundsException, Boolean, Int, Nothing, UnsupportedOperationException, throws, Array, AnyRef, `inline`, Serializable, Byte, Short, Long, Double, Unit, Float, Char}
+import scala.util.hashing.MurmurHash3
 import scala.runtime.ScalaRunTime
 import scala.Predef.{???, intWrapper}
+import java.util.Arrays
 
 /**
   * An immutable array.
@@ -16,29 +18,26 @@ import scala.Predef.{???, intWrapper}
   * @define coll immutable array
   * @define Coll `ImmutableArray`
   */
-class ImmutableArray[+A] private[collection] (private val elements: scala.Array[Any])
+sealed abstract class ImmutableArray[+A]
   extends IndexedSeq[A]
     with IndexedSeqOps[A, ImmutableArray, ImmutableArray[A]]
     with StrictOptimizedSeqOps[A, ImmutableArray, ImmutableArray[A]] {
 
   def iterableFactory: SeqFactory[ImmutableArray] = ImmutableArray
 
+  protected def elements: AnyRef
+
   protected[this] def fromSpecificIterable(coll: strawman.collection.Iterable[A]): ImmutableArray[A] = fromIterable(coll)
 
   protected[this] def newSpecificBuilder(): Builder[A, ImmutableArray[A]] = ImmutableArray.newBuilder[A]()
 
-  def length: Int = elements.length
-
-  override def knownSize: Int = elements.length
-
-  @throws[ArrayIndexOutOfBoundsException]
-  def apply(i: Int): A = ScalaRunTime.array_apply(elements, i).asInstanceOf[A]
+  override def knownSize: Int = length
 
   override def updated[B >: A](index: Int, elem: B): ImmutableArray[B] = {
     val dest = scala.Array.ofDim[Any](length)
-    java.lang.System.arraycopy(elements, 0, dest, 0, length)
+    scala.Array.copy(elements, 0, dest, 0, length)
     dest(index) = elem
-    new ImmutableArray(dest)
+    ImmutableArray.wrapArray(dest)
   }
 
   override def map[B](f: A => B): ImmutableArray[B] = ImmutableArray.tabulate(length)(i => f(apply(i)))
@@ -46,24 +45,24 @@ class ImmutableArray[+A] private[collection] (private val elements: scala.Array[
   override def prepended[B >: A](elem: B): ImmutableArray[B] = {
     val dest = scala.Array.ofDim[Any](length + 1)
     dest(0) = elem
-    java.lang.System.arraycopy(elements, 0, dest, 1, length)
-    new ImmutableArray(dest)
+    scala.Array.copy(elements, 0, dest, 1, length)
+    ImmutableArray.wrapArray(dest)
   }
 
   override def appended[B >: A](elem: B): ImmutableArray[B] = {
     val dest = scala.Array.ofDim[Any](length + 1)
-    java.lang.System.arraycopy(elements, 0, dest, 0, length)
+    scala.Array.copy(elements, 0, dest, 0, length)
     dest(length) = elem
-    new ImmutableArray(dest)
+    ImmutableArray.wrapArray(dest)
   }
 
   override def appendedAll[B >: A](xs: collection.Iterable[B]): ImmutableArray[B] =
     xs match {
       case bs: ImmutableArray[B] =>
         val dest = scala.Array.ofDim[Any](length + bs.length)
-        java.lang.System.arraycopy(elements, 0, dest, 0, length)
-        java.lang.System.arraycopy(bs.elements, 0, dest, length, bs.length)
-        new ImmutableArray(dest)
+        scala.Array.copy(elements, 0, dest, 0, length)
+        scala.Array.copy(bs.elements, 0, dest, length, bs.length)
+        ImmutableArray.wrapArray(dest)
       case _ =>
         fromIterable(View.Concat(toIterable, xs))
     }
@@ -74,7 +73,7 @@ class ImmutableArray[+A] private[collection] (private val elements: scala.Array[
         val dest = scala.Array.ofDim[Any](length + bs.length)
         java.lang.System.arraycopy(bs.elements, 0, dest, 0, bs.length)
         java.lang.System.arraycopy(elements, 0, dest, bs.length, length)
-        new ImmutableArray(dest)
+        ImmutableArray.wrapArray(dest)
       case _ =>
         fromIterable(View.Concat(xs, toIterable))
     }
@@ -106,7 +105,7 @@ class ImmutableArray[+A] private[collection] (private val elements: scala.Array[
     if (length > 0) {
       val dest = scala.Array.ofDim[Any](length - 1)
       java.lang.System.arraycopy(elements, 1, dest, 0, length - 1)
-      new ImmutableArray(dest)
+      ImmutableArray.wrapArray(dest)
     } else throw new UnsupportedOperationException("tail of empty array")
 
   override def reverse: ImmutableArray[A] = ImmutableArray.tabulate(length)(i => apply(length - 1 - i))
@@ -120,12 +119,12 @@ class ImmutableArray[+A] private[collection] (private val elements: scala.Array[
   */
 object ImmutableArray extends StrictOptimizedSeqFactory[ImmutableArray] {
 
-  private[this] lazy val emptyImpl = new ImmutableArray[Nothing](new scala.Array[Any](0))
+  private[this] lazy val emptyImpl = new ImmutableArray.ofRef[Nothing](new scala.Array[Nothing](0))
 
   def empty[A]: ImmutableArray[A] = emptyImpl
 
   def fromArrayBuffer[A](arr: ArrayBuffer[A]): ImmutableArray[A] =
-    new ImmutableArray[A](arr.asInstanceOf[ArrayBuffer[Any]].toArray)
+    wrapArray[A](arr.asInstanceOf[ArrayBuffer[Any]].toArray)
 
   def from[A](it: strawman.collection.IterableOnce[A]): ImmutableArray[A] =
     if (it.knownSize > -1) {
@@ -137,7 +136,7 @@ object ImmutableArray extends StrictOptimizedSeqFactory[ImmutableArray] {
         ScalaRunTime.array_update(elements, i, iterator.next())
         i = i + 1
       }
-      new ImmutableArray(elements)
+      wrapArray(elements)
     } else fromArrayBuffer(ArrayBuffer.from(it))
 
   def newBuilder[A](): Builder[A, ImmutableArray[A]] =
@@ -152,7 +151,140 @@ object ImmutableArray extends StrictOptimizedSeqFactory[ImmutableArray] {
       ScalaRunTime.array_update(elements, i, f(i))
       i = i + 1
     }
-    new ImmutableArray(elements)
+    ImmutableArray.wrapArray(elements)
   }
 
+  def wrapArray[T](x: AnyRef): ImmutableArray[T] = (x match {
+    case null              => null
+    case x: Array[AnyRef]  => new ofRef[AnyRef](x)
+    case x: Array[Int]     => new ofInt(x)
+    case x: Array[Double]  => new ofDouble(x)
+    case x: Array[Long]    => new ofLong(x)
+    case x: Array[Float]   => new ofFloat(x)
+    case x: Array[Char]    => new ofChar(x)
+    case x: Array[Byte]    => new ofByte(x)
+    case x: Array[Short]   => new ofShort(x)
+    case x: Array[Boolean] => new ofBoolean(x)
+    case x: Array[Unit]    => new ofUnit(x)
+  }).asInstanceOf[ImmutableArray[T]]
+
+  final class ofRef[T <: AnyRef](val array: Array[T]) extends ImmutableArray[T] with Serializable {
+    protected def elements: Array[T] = array
+    def length: Int = array.length
+    @throws[ArrayIndexOutOfBoundsException]
+    def apply(i: Int): T = elements(i)
+    override def hashCode = MurmurHash3.arrayHash(array)
+    override def equals(that: Any) = that match {
+      case that: ofRef[_] => Arrays.equals(array.asInstanceOf[Array[AnyRef]], that.array.asInstanceOf[Array[AnyRef]])
+      case _ => super.equals(that)
+    }
+  }
+
+  final class ofByte(val array: Array[Byte]) extends ImmutableArray[Byte] with Serializable {
+    protected def elements: Array[Byte] = array
+    def length: Int = array.length
+    @throws[ArrayIndexOutOfBoundsException]
+    def apply(i: Int): Byte = elements(i)
+    override def hashCode = MurmurHash3.arrayHash(array)
+    override def equals(that: Any) = that match {
+      case that: ofByte => Arrays.equals(array, that.array)
+      case _ => super.equals(that)
+    }
+  }
+
+  final class ofShort(val array: Array[Short]) extends ImmutableArray[Short] with Serializable {
+    protected def elements: Array[Short] = array
+    def length: Int = array.length
+    @throws[ArrayIndexOutOfBoundsException]
+    def apply(i: Int): Short = elements(i)
+    override def hashCode = MurmurHash3.arrayHash(array)
+    override def equals(that: Any) = that match {
+      case that: ofShort => Arrays.equals(array, that.array)
+      case _ => super.equals(that)
+    }
+  }
+
+  final class ofChar(val array: Array[Char]) extends ImmutableArray[Char] with Serializable {
+    protected def elements: Array[Char] = array
+    def length: Int = array.length
+    @throws[ArrayIndexOutOfBoundsException]
+    def apply(i: Int): Char = elements(i)
+    override def hashCode = MurmurHash3.arrayHash(array)
+    override def equals(that: Any) = that match {
+      case that: ofChar => Arrays.equals(array, that.array)
+      case _ => super.equals(that)
+    }
+  }
+
+  final class ofInt(val array: Array[Int]) extends ImmutableArray[Int] with Serializable {
+    protected def elements: Array[Int] = array
+    def length: Int = array.length
+    @throws[ArrayIndexOutOfBoundsException]
+    def apply(i: Int): Int = elements(i)
+    override def hashCode = MurmurHash3.arrayHash(array)
+    override def equals(that: Any) = that match {
+      case that: ofInt => Arrays.equals(array, that.array)
+      case _ => super.equals(that)
+    }
+  }
+
+  final class ofLong(val array: Array[Long]) extends ImmutableArray[Long] with Serializable {
+    protected def elements: Array[Long] = array
+    def length: Int = array.length
+    @throws[ArrayIndexOutOfBoundsException]
+    def apply(i: Int): Long = elements(i)
+    override def hashCode = MurmurHash3.arrayHash(array)
+    override def equals(that: Any) = that match {
+      case that: ofLong => Arrays.equals(array, that.array)
+      case _ => super.equals(that)
+    }
+  }
+
+  final class ofFloat(val array: Array[Float]) extends ImmutableArray[Float] with Serializable {
+    protected def elements: Array[Float] = array
+    def length: Int = array.length
+    @throws[ArrayIndexOutOfBoundsException]
+    def apply(i: Int): Float = elements(i)
+    override def hashCode = MurmurHash3.arrayHash(array)
+    override def equals(that: Any) = that match {
+      case that: ofFloat => Arrays.equals(array, that.array)
+      case _ => super.equals(that)
+    }
+  }
+
+  final class ofDouble(val array: Array[Double]) extends ImmutableArray[Double] with Serializable {
+    protected def elements: Array[Double] = array
+    def length: Int = array.length
+    @throws[ArrayIndexOutOfBoundsException]
+    def apply(i: Int): Double = elements(i)
+    override def hashCode = MurmurHash3.arrayHash(array)
+    override def equals(that: Any) = that match {
+      case that: ofDouble => Arrays.equals(array, that.array)
+      case _ => super.equals(that)
+    }
+  }
+
+  final class ofBoolean(val array: Array[Boolean]) extends ImmutableArray[Boolean] with Serializable {
+    protected def elements: Array[Boolean] = array
+    def length: Int = array.length
+    @throws[ArrayIndexOutOfBoundsException]
+    def apply(i: Int): Boolean = elements(i)
+    override def hashCode = MurmurHash3.arrayHash(array)
+    override def equals(that: Any) = that match {
+      case that: ofBoolean => Arrays.equals(array, that.array)
+      case _ => super.equals(that)
+    }
+  }
+
+  final class ofUnit(val array: Array[Unit]) extends ImmutableArray[Unit] with Serializable {
+    protected def elements: Array[Unit] = array
+    def length: Int = array.length
+    @throws[ArrayIndexOutOfBoundsException]
+    def apply(i: Int): Unit = elements(i)
+    override def hashCode = MurmurHash3.arrayHash(array)
+    override def equals(that: Any) = that match {
+      case that: ofUnit => array.length == that.array.length
+      case _ => super.equals(that)
+    }
+  }
 }
