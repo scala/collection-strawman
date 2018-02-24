@@ -6,7 +6,7 @@ val dotty = settingKey[String]("dotty version")
 dotty in ThisBuild := "0.6.0-RC1"
 
 val collectionsScalaVersionSettings = Seq(
-  scalaVersion := "2.13.0-M2",
+  scalaVersion := "2.13.0-M3",
   crossScalaVersions := scalaVersion.value :: "2.12.4" :: dotty.value :: Nil
 )
 
