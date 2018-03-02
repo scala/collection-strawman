@@ -5,15 +5,17 @@ import org.scalajs.sbtplugin.cross.CrossProject
 val dotty = settingKey[String]("dotty version")
 dotty in ThisBuild := "0.6.0-RC1"
 
+resolvers in Global += ("scala-pr-validation" at "https://scala-ci.typesafe.com/artifactory/scala-pr-validation-snapshots/")
+
 val collectionsScalaVersionSettings = Seq(
-  scalaVersion := "2.13.0-M2",
+  scalaVersion := "2.13.0-pre-7c018a0-SNAPSHOT",
   crossScalaVersions := scalaVersion.value :: "2.12.4" :: dotty.value :: Nil
 )
 
 val commonSettings = Seq(
   organization := "ch.epfl.scala",
   version := "0.10.0-SNAPSHOT",
-  scalaVersion := "2.12.4",
+  scalaVersion := "2.13.0-pre-7c018a0-SNAPSHOT",
   scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked", "-language:higherKinds"/*, "-opt:l:classpath"*/),
   scalacOptions ++= {
     if (!isDotty.value)
