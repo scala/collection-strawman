@@ -4,6 +4,9 @@ Want to be part of this project but don’t know what you can do to help? You sh
 [low hanging fruit](https://github.com/scala/collection-strawman/issues?q=is%3Aissue+is%3Aopen+label%3A%22low+hanging+fruit%22)
 issues!
 
+**The instructions that follow are partly outdated. They will be updated shortly. The collections have been merged to the [scala/scala](https://github.com/scala/scala)
+repository. Please see the contributing instructions of that repository instead.**
+
 ## Getting started
 
 You need the following:
