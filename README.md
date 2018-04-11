@@ -9,10 +9,11 @@ Implementation of the new collections of Scala 2.13.
 - [Dotty Issue](https://github.com/lampepfl/dotty/issues/818)
 - [Scala Center Proposal](https://github.com/scalacenter/advisoryboard/blob/master/proposals/007-collections.md)
 
-**Please note that we are currently in the process of moving the implementation to the
-[scala/scala](https://github.com/scala/scala) repository. If you wanted to contribute
-to the collections, you should wait for the move to be finished and then target
-your work to the [scala/scala](https://github.com/scala/scala) repository.**
+**The implementation of the collection has been merged to the
+[scala/scala](https://github.com/scala/scala) repository. Contributions should now target the
+[scala/scala](https://github.com/scala/scala) repository (`2.13.x` branch). The current scala/collection-strawman
+repository is still used as an issue tracker. It currently contains the Scalafix migration rules and the `collections-contrib`
+module.**
 
 ## Current Status and Roadmap
 
