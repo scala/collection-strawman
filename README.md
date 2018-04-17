@@ -9,49 +9,40 @@ Implementation of the new collections of Scala 2.13.
 - [Dotty Issue](https://github.com/lampepfl/dotty/issues/818)
 - [Scala Center Proposal](https://github.com/scalacenter/advisoryboard/blob/master/proposals/007-collections.md)
 
-**The implementation of the collection has been merged to the
+**The implementation of the collections has been merged to the
 [scala/scala](https://github.com/scala/scala) repository. Contributions should now target the
-[scala/scala](https://github.com/scala/scala) repository (`2.13.x` branch). The current scala/collection-strawman
-repository is still used as an issue tracker. It currently contains the Scalafix migration rules and the `collections-contrib`
+[scala/scala](https://github.com/scala/scala) repository (branch `2.13.x`). The current scala/collection-strawman
+repository is still used as an issue tracker. It also contains the Scalafix migration rules and the `collections-contrib`
 module.**
 
 ## Current Status and Roadmap
 
-The new collections are available as a regular external library (see below usage
-instructions). The collections live in the `strawman.collection` namespace
-(instead of `scala.collection`).
+The new collections will be included in the standard library of Scala 2.13.0-M4.
 
-Almost all operations and collection types of the current standard collections
-are available. If you see something missing, please
-[create an issue](https://github.com/scala/collection-strawman/issues/new).
+You can currently use a pre-release of 2.13.0-M4:
 
-The new collections will be part of the 2.13.0-M4 Scala distribution, where they will
-replace the standard collections.
+~~~ scala
+scalaVersion := "2.13.0-M4-pre-20d3c21"
+libraryDependencies += "ch.epfl.scala" %% "collections-contrib" % "0.10.0-SNAPSHOT" // optional
+~~~
+
+The `collections-contrib` artifact provides additional operations on the collections (see the
+[Additional operations](#additional-operations) section).
 
 ## Use the last library release in your project
 
-### Build setup
+Before 2.13.0-M4 is released you can use the previous releases of the collections (published as an external library).
+The collections live in the `strawman.collection` namespace (instead of `scala.collection`).
 
-Add the following dependency to your project:
+Add the following dependencies to your project:
 
 ~~~ scala
 libraryDependencies += "ch.epfl.scala" %% "collection-strawman" % "0.9.0"
 libraryDependencies += "ch.epfl.scala" %% "collections-contrib" % "0.9.0" // optional
 ~~~
 
-The 0.9.0 version is compatible with Scala 2.13 and Dotty 0.6. Scala 2.12 is also supported
+The 0.9.0 version is compatible with Scala 2.13-M2 and Dotty 0.6. Scala 2.12 is also supported
 but you might encounter type inference issues with it.
-
-We also automatically publish snapshots on Sonatype:
-
-~~~ scala
-resolvers += Resolver.sonatypeRepo("snapshots")
-
-libraryDependencies += "ch.epfl.scala" %% "collection-strawman" % "0.10.0-SNAPSHOT"
-~~~
-
-The `collections-contrib` artifact provides additional operations on the collections (see the
-[Additional operations](#additional-operations) section).
 
 ### API Documentation
 
@@ -61,9 +52,9 @@ The `collections-contrib` artifact provides additional operations on the collect
 ### Migrating from the standard collections to the strawman
 
 There is an [entry in the FAQ](https://github.com/scala/collection-strawman/wiki/FAQ#what-are-the-breaking-changes)
-that aims to list all breaking changes.
+that aims to list all the breaking changes.
 
-A tool is being developed to automatically migrate code that uses the standard
+A tool is currently developed to automatically migrate code that uses the standard
 collection to use the strawman.
 
 To use it, add the [scalafix](https://scalacenter.github.io/scalafix/) sbt plugin
