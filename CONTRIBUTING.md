@@ -4,8 +4,18 @@ Want to be part of this project but don’t know what you can do to help? You sh
 [low hanging fruit](https://github.com/scala/collection-strawman/issues?q=is%3Aissue+is%3Aopen+label%3A%22low+hanging+fruit%22)
 issues!
 
-**The instructions that follow are partly outdated. They will be updated shortly. The collections have been merged to the [scala/scala](https://github.com/scala/scala)
-repository. Please see the contributing instructions of that repository instead.**
+## Where is the code?
+
+When we talk about “the new collections” we could be referring to the following projects:
+
+- the collections themselves (hosted in the [scala/scala](https://github.com/scala/scala) repository),
+- the compatibility library (hosted in the [scala/scala-collection-compat](https://github.com/scala/scala-collection-compat)
+  repository), which provide the new APIs to the old collections, so that code that takes
+  advantage of the new collections can still cross-compile with 2.12 and older Scala version,
+- the scalafix rewrite rules (hosted here), which adapt code that were using the old collections to the new collections,
+- the contrib library (hosted here), which is an incubator for new operations.
+
+Please refer to the contributing guidelines of the hosting repository of the project you want to contribute to.
 
 ## Getting started
 
@@ -30,52 +40,17 @@ quickly know which issues are ready and which are already in progress.
 
 ### Sbt Projects
 
-- `collectionsJVM`/`collectionsJS` (in the `collections/` directory): contains the implementation
-  of the collections;
-- `junit` (in `test/junit/` directory): unit tests;
-- `scalacheck` (in `test/scalacheck/` directory): properties;
-- `timeBenchmark` (in `benchmarks/time/` directory): benchmarks measuring
-  execution time;
-- `memoryBenchmark` (in `benchmarks/memory/` directory): benchmarks measuring
-  the memory footprint of the collections;
-- `collections-contribJS`/`collections-contribJVM` (in the `collections-contrib/` directory): implementation
+- `collections-contrib` project (in the `collections-contrib/` directory): implementation
   of decorators or additional features;
-- `collection-strawman` (in the root directory): root project;
-- Also, in directory `scalafix/` there is an independent project containing
-  the implementation of the migration tool.
+- In directory `scalafix/` there is an independent build containing the implementation of the migration tool.
 
 ### Useful Sbt Commands
 
-- Compile the collections and run the tests:
+- Compile the `collections-contribJVM` project and run the tests:
   
   ~~~
-  >; compile; test; junit/test; scalacheck/test
+  > test
   ~~~
-- Run the memory benchmark:
-  
-  ~~~
-  > memoryBenchmark/charts
-  ~~~
-- Run the execution time benchmark:
-  
-  ~~~
-  > timeBenchmark/charts
-  ~~~
-  - Charts are produced as .png files in the `benchmarks/time/target/` directory.
-    Each `@Benchmark` method produces a .png chart with the same name (e.g. the
-    `foreach` benchmark produces a `foreach.png` chart). In each chart, we
-    aggregate results from all the benchmark classes that have a benchmark with
-    the same name (e.g. the `foreach.png` chart aggregates information from the
-    `ListBenchmark`’s `foreach` method, `LazyListBenchmark`’s `foreach` method,
-    etc.).
-  - Running the whole benchmark suite takes time (several hours) and produces
-    charts containing series for each collection type. You can restrict the
-    benchmarks to be run by JMH to get more readable results. For instance, to
-    run only benchmarks whose name contain `Array`:
-    
-    ~~~
-    > timeBenchmark/charts Array
-    ~~~
 
 ## Migration tool
 
