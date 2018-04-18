@@ -54,7 +54,7 @@ but you might encounter type inference issues with it.
 There is an [entry in the FAQ](https://github.com/scala/collection-strawman/wiki/FAQ#what-are-the-breaking-changes)
 that aims to list all the breaking changes.
 
-A tool is currently developed to automatically migrate code that uses the standard
+A tool is being developed to automatically migrate code that uses the standard
 collection to use the strawman.
 
 To use it, add the [scalafix](https://scalacenter.github.io/scalafix/) sbt plugin
