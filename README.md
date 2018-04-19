@@ -70,24 +70,12 @@ it over time. If you encounter a use case that’s not supported, please
 report it as described in the
 [contributing documentation](CONTRIBUTING.md#migration-tool).
 
-#### Migrating a 2.12 code base to a 2.12 code base that uses the collection strawman as a library
-
-Run the following sbt task on your project:
-
-~~~
-> scalafix https://github.com/scala/collection-strawman/raw/master/scalafix/2.12/rules/src/main/scala/fix/Collectionstrawman_v0.scala
-~~~
-
-In essence, the migration tool changes the imports in your source code
-so that the strawman definitions are imported. It also rewrites
-expressions that use an API that is different in the strawman.
-
 #### Migrating a 2.12 code base to 2.13 code base
 
 Run the following sbt task on your project:
 
 ~~~
-> scalafix https://github.com/scala/collection-strawman/raw/master/scalafix/2.13/rules/src/main/scala/fix/Collectionstrawman_v0.scala
+> scalafix github:scala/collection-strawman/v0
 ~~~
 
 ## Contributing
