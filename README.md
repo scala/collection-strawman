@@ -12,8 +12,10 @@ Implementation of the new collections of Scala 2.13.
 **The implementation of the collections has been merged to the
 [scala/scala](https://github.com/scala/scala) repository. Contributions should now target the
 [scala/scala](https://github.com/scala/scala) repository (branch `2.13.x`). The current scala/collection-strawman
-repository is still used as an issue tracker. It also contains the Scalafix migration rules and the `collections-contrib`
-module.**
+repository is only used as an issue tracker.**
+
+Thanks to Git, you can still look up the code before it was deleted from this repository by browsing
+the [before-deletion](https://github.com/scala/collection-strawman/tree/before-deletion) branch.
 
 ## Current Status and Roadmap
 
@@ -23,11 +25,7 @@ You can currently use a pre-release of 2.13.0-M4:
 
 ~~~ scala
 scalaVersion := "2.13.0-M4-pre-20d3c21"
-libraryDependencies += "ch.epfl.scala" %% "collections-contrib" % "0.10.0-SNAPSHOT" // optional
 ~~~
-
-The `collections-contrib` artifact provides additional operations on the collections (see the
-[Additional operations](#additional-operations) section).
 
 ## Use the last library release in your project
 
@@ -48,35 +46,6 @@ but you might encounter type inference issues with it.
 
 - [`collection-strawman`](https://static.javadoc.io/ch.epfl.scala/collection-strawman_2.12/0.9.0/index.html)
 - [`collections-contrib`](https://static.javadoc.io/ch.epfl.scala/collections-contrib_2.12/0.9.0/index.html)
-
-### Migrating from the standard collections to the strawman
-
-There is an [entry in the FAQ](https://github.com/scala/collection-strawman/wiki/FAQ#what-are-the-breaking-changes)
-that aims to list all the breaking changes.
-
-A tool is being developed to automatically migrate code that uses the standard
-collection to use the strawman.
-
-To use it, add the [scalafix](https://scalacenter.github.io/scalafix/) sbt plugin
-to your build, as explained in
-[its documentation](https://scalacenter.github.io/scalafix/#Installation).
-
-Two situations are supported: (1) migrating a 2.12 code base to a 2.12 code base that
-uses the collection strawman as a library (instead of the standard collections), and
-(2) migrating a 2.12 code base to 2.13 code base.
-
-The migration tool is not exhaustive and we will continue to improve
-it over time. If you encounter a use case that’s not supported, please
-report it as described in the
-[contributing documentation](CONTRIBUTING.md#migration-tool).
-
-#### Migrating a 2.12 code base to 2.13 code base
-
-Run the following sbt task on your project:
-
-~~~
-> scalafix github:scala/collection-strawman/v0
-~~~
 
 ## Contributing
 
